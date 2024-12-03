@@ -47,23 +47,45 @@ totalcharges = st.sidebar.number_input("Cargo total", min_value=0, value=200)
 
 # Preprocesar las variables categóricas
 def preprocesar_datos(input_data):
-    input_data['gender'] = 1 if input_data['gender'] == 'Masculino' else 0
-    input_data['partner'] = 1 if input_data['partner'] == 'Sí' else 0
-    input_data['dependents'] = 1 if input_data['dependents'] == 'Sí' else 0
-    input_data['phoneservice'] = 1 if input_data['phoneservice'] == 'Sí' else 0
-    input_data['multiplelines'] = 1 if input_data['multiplelines'] == 'Sí' else (0 if input_data['multiplelines'] == 'No phone service' else -1)
-    input_data['internetservice'] = 0 if input_data['internetservice'] == 'No internet service' else (1 if input_data['internetservice'] == 'DSL' else 2)
-    input_data['onlinesecurity'] = 1 if input_data['onlinesecurity'] == 'Sí' else (0 if input_data['onlinesecurity'] == 'No internet service' else -1)
-    input_data['onlinebackup'] = 1 if input_data['onlinebackup'] == 'Sí' else (0 if input_data['onlinebackup'] == 'No internet service' else -1)
-    input_data['deviceprotection'] = 1 if input_data['deviceprotection'] == 'Sí' else (0 if input_data['deviceprotection'] == 'No internet service' else -1)
-    input_data['techsupport'] = 1 if input_data['techsupport'] == 'Sí' else (0 if input_data['techsupport'] == 'No internet service' else -1)
-    input_data['streamingtv'] = 1 if input_data['streamingtv'] == 'Sí' else (0 if input_data['streamingtv'] == 'No internet service' else -1)
-    input_data['streamingmovies'] = 1 if input_data['streamingmovies'] == 'Sí' else (0 if input_data['streamingmovies'] == 'No internet service' else -1)
-    input_data['contract'] = 0 if input_data['contract'] == 'Mes a mes' else (1 if input_data['contract'] == 'Un año' else 2)
-    input_data['paperlessbilling'] = 1 if input_data['paperlessbilling'] == 'Sí' else 0
-    input_data['paymentmethod'] = 0 if input_data['paymentmethod'] == 'Banco' else (1 if input_data['paymentmethod'] == 'Cheque electrónico' else (2 if input_data['paymentmethod'] == 'Transferencia bancaria' else 3))
-    
+    input_data['gender'] = input_data['gender'].apply(lambda x: 1 if x == 'Masculino' else 0)
+    input_data['partner'] = input_data['partner'].apply(lambda x: 1 if x == 'Sí' else 0)
+    input_data['dependents'] = input_data['dependents'].apply(lambda x: 1 if x == 'Sí' else 0)
+    input_data['phoneservice'] = input_data['phoneservice'].apply(lambda x: 1 if x == 'Sí' else 0)
+    input_data['multiplelines'] = input_data['multiplelines'].apply(
+        lambda x: 1 if x == 'Sí' else (0 if x == 'No phone service' else -1)
+    )
+    input_data['internetservice'] = input_data['internetservice'].apply(
+        lambda x: 0 if x == 'No internet service' else (1 if x == 'DSL' else 2)
+    )
+    input_data['onlinesecurity'] = input_data['onlinesecurity'].apply(
+        lambda x: 1 if x == 'Sí' else (0 if x == 'No internet service' else -1)
+    )
+    input_data['onlinebackup'] = input_data['onlinebackup'].apply(
+        lambda x: 1 if x == 'Sí' else (0 if x == 'No internet service' else -1)
+    )
+    input_data['deviceprotection'] = input_data['deviceprotection'].apply(
+        lambda x: 1 if x == 'Sí' else (0 if x == 'No internet service' else -1)
+    )
+    input_data['techsupport'] = input_data['techsupport'].apply(
+        lambda x: 1 if x == 'Sí' else (0 if x == 'No internet service' else -1)
+    )
+    input_data['streamingtv'] = input_data['streamingtv'].apply(
+        lambda x: 1 if x == 'Sí' else (0 if x == 'No internet service' else -1)
+    )
+    input_data['streamingmovies'] = input_data['streamingmovies'].apply(
+        lambda x: 1 if x == 'Sí' else (0 if x == 'No internet service' else -1)
+    )
+    input_data['contract'] = input_data['contract'].apply(
+        lambda x: 0 if x == 'Mes a mes' else (1 if x == 'Un año' else 2)
+    )
+    input_data['paperlessbilling'] = input_data['paperlessbilling'].apply(
+        lambda x: 1 if x == 'Sí' else 0
+    )
+    input_data['paymentmethod'] = input_data['paymentmethod'].apply(
+        lambda x: 0 if x == 'Banco' else (1 if x == 'Cheque electrónico' else (2 if x == 'Transferencia bancaria' else 3))
+    )
     return input_data
+
 
 # Crear un DataFrame con los datos introducidos
 nuevos_datos = pd.DataFrame({
