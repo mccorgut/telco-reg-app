@@ -2,120 +2,73 @@ import streamlit as st
 import pickle
 import pandas as pd
 import numpy as np
+from sklearn.feature_extraction import DictVectorizer
 
-# Cargar el modelo guardado
-@st.cache_data
-def cargar_modelo():
-    with open('churn-model.pck', 'rb') as file:
-        return pickle.load(file)
+# Cargar el modelo y el DictVectorizer
+with open('models/churn-model.pck', 'rb') as f:
+    dv, model = pickle.load(f)
 
-# Cargar el modelo
-modelo_regresion = cargar_modelo()
+# Título de la aplicación
+st.title("Predicción de Churn de Clientes")
 
-# Título de la app
-st.title("Predicción de Telco - Modelo de Regresión Lineal")
+# Formulario para introducir datos del cliente
+st.header("Introduce los datos del cliente:")
 
-# Explicación de la app
-st.write("""
-Esta aplicación utiliza un modelo de regresión lineal entrenado sobre el dataset Telco para predecir características relacionadas con clientes de telecomunicaciones.
-Introduce los valores de las variables para hacer una predicción.
-""")
+contract = st.selectbox("Tipo de contrato", ["month-to-month", "one_year", "two_year"])
+dependents = st.selectbox("Dependientes", ["no", "yes"])
+device_protection = st.selectbox("Protección de dispositivos", ["no", "yes", "no_internet_service"])
+gender = st.selectbox("Género", ["female", "male"])
+internet_service = st.selectbox("Tipo de Internet", ["dsl", "fiber_optic", "no"])
+monthly_charges = st.number_input("Cargos mensuales", min_value=0.0, max_value=500.0, step=0.1)
+multiplelines = st.selectbox("Múltiples líneas", ["no", "no_phone_service", "yes"])
+online_backup = st.selectbox("Copia de seguridad online", ["no", "yes", "no_internet_service"])
+online_security = st.selectbox("Seguridad online", ["no", "yes", "no_internet_service"])
+paperless_billing = st.selectbox("Facturación sin papel", ["no", "yes"])
+partner = st.selectbox("Pareja", ["no", "yes"])
+payment_method = st.selectbox("Método de pago", ["bank_transfer_(automatic)", "credit_card_(automatic)", "electronic_check", "mailed_check"])
+phoneservice = st.selectbox("Servicio telefónico", ["no", "yes"])
+senior_citizen = st.selectbox("¿Es persona mayor?", ["no", "yes"])
+streaming_movies = st.selectbox("Películas en streaming", ["no", "yes", "no_internet_service"])
+streaming_tv = st.selectbox("Televisión en streaming", ["no", "yes", "no_internet_service"])
+tech_support = st.selectbox("Soporte técnico", ["no", "yes", "no_internet_service"])
+tenure = st.number_input("Antigüedad (meses)", min_value=0, max_value=100, step=1)
+total_charges = st.number_input("Cargos totales", min_value=0.0, max_value=10000.0, step=0.1)
 
-# Entradas del usuario
-st.sidebar.header("Introduce las características del cliente")
+# Botón de predicción
+if st.button("Predecir"):
+    # Crear un diccionario con los datos del cliente
+    client_data = {
+        "contract": contract,
+        "dependents": dependents,
+        "deviceprotection": device_protection,
+        "gender": gender,
+        "internetservice": internet_service,
+        "monthlycharges": monthly_charges,
+        "multiplelines": multiplelines,
+        "onlinebackup": online_backup,
+        "onlinesecurity": online_security,
+        "paperlessbilling": paperless_billing,
+        "partner": partner,
+        "paymentmethod": payment_method,
+        "phoneservice": phoneservice,
+        "seniorcitizen": senior_citizen,
+        "streamingmovies": streaming_movies,
+        "streamingtv": streaming_tv,
+        "techsupport": tech_support,
+        "tenure": tenure,
+        "totalcharges": total_charges
+    }
 
-# Variables categóricas y numéricas
-gender = st.sidebar.selectbox("Género", ['Femenino', 'Masculino'])
-seniorcitizen = st.sidebar.selectbox("Senior Citizen (1=Sí, 0=No)", [1, 0])
-partner = st.sidebar.selectbox("Tiene pareja", ['Sí', 'No'])
-dependents = st.sidebar.selectbox("Tiene dependientes", ['Sí', 'No'])
-tenure = st.sidebar.number_input("Años de permanencia", min_value=0, max_value=72, value=12)
-phoneservice = st.sidebar.selectbox("Tiene servicio telefónico", ['Sí', 'No'])
-multiplelines = st.sidebar.selectbox("Tiene múltiples líneas", ['Sí', 'No', 'No phone service'])
-internetservice = st.sidebar.selectbox("Servicio de Internet", ['Fibra óptica', 'DSL', 'No internet service'])
-onlinesecurity = st.sidebar.selectbox("Seguridad online", ['Sí', 'No', 'No internet service'])
-onlinebackup = st.sidebar.selectbox("Copia de seguridad online", ['Sí', 'No', 'No internet service'])
-deviceprotection = st.sidebar.selectbox("Protección de dispositivo", ['Sí', 'No', 'No internet service'])
-techsupport = st.sidebar.selectbox("Soporte técnico", ['Sí', 'No', 'No internet service'])
-streamingtv = st.sidebar.selectbox("Streaming TV", ['Sí', 'No', 'No internet service'])
-streamingmovies = st.sidebar.selectbox("Streaming Movies", ['Sí', 'No', 'No internet service'])
-contract = st.sidebar.selectbox("Tipo de contrato", ['Mes a mes', 'Un año', 'Dos años'])
-paperlessbilling = st.sidebar.selectbox("Facturación sin papel", ['Sí', 'No'])
-paymentmethod = st.sidebar.selectbox("Método de pago", ['Banco', 'Cheque electrónico', 'Transferencia bancaria', 'Crédito automático'])
-monthlycharges = st.sidebar.number_input("Cargo mensual", min_value=0, value=70)
-totalcharges = st.sidebar.number_input("Cargo total", min_value=0, value=200)
+    # Transformar los datos del cliente
+    X_client = dv.transform([client_data])
 
-# Preprocesar las variables categóricas
-def preprocesar_datos(input_data):
-    input_data['gender'] = input_data['gender'].apply(lambda x: 1 if x == 'Masculino' else 0)
-    input_data['partner'] = input_data['partner'].apply(lambda x: 1 if x == 'Sí' else 0)
-    input_data['dependents'] = input_data['dependents'].apply(lambda x: 1 if x == 'Sí' else 0)
-    input_data['phoneservice'] = input_data['phoneservice'].apply(lambda x: 1 if x == 'Sí' else 0)
-    input_data['multiplelines'] = input_data['multiplelines'].apply(
-        lambda x: 1 if x == 'Sí' else (0 if x == 'No phone service' else -1)
-    )
-    input_data['internetservice'] = input_data['internetservice'].apply(
-        lambda x: 0 if x == 'No internet service' else (1 if x == 'DSL' else 2)
-    )
-    input_data['onlinesecurity'] = input_data['onlinesecurity'].apply(
-        lambda x: 1 if x == 'Sí' else (0 if x == 'No internet service' else -1)
-    )
-    input_data['onlinebackup'] = input_data['onlinebackup'].apply(
-        lambda x: 1 if x == 'Sí' else (0 if x == 'No internet service' else -1)
-    )
-    input_data['deviceprotection'] = input_data['deviceprotection'].apply(
-        lambda x: 1 if x == 'Sí' else (0 if x == 'No internet service' else -1)
-    )
-    input_data['techsupport'] = input_data['techsupport'].apply(
-        lambda x: 1 if x == 'Sí' else (0 if x == 'No internet service' else -1)
-    )
-    input_data['streamingtv'] = input_data['streamingtv'].apply(
-        lambda x: 1 if x == 'Sí' else (0 if x == 'No internet service' else -1)
-    )
-    input_data['streamingmovies'] = input_data['streamingmovies'].apply(
-        lambda x: 1 if x == 'Sí' else (0 if x == 'No internet service' else -1)
-    )
-    input_data['contract'] = input_data['contract'].apply(
-        lambda x: 0 if x == 'Mes a mes' else (1 if x == 'Un año' else 2)
-    )
-    input_data['paperlessbilling'] = input_data['paperlessbilling'].apply(
-        lambda x: 1 if x == 'Sí' else 0
-    )
-    input_data['paymentmethod'] = input_data['paymentmethod'].apply(
-        lambda x: 0 if x == 'Banco' else (1 if x == 'Cheque electrónico' else (2 if x == 'Transferencia bancaria' else 3))
-    )
-    return input_data
+    # Realizar la predicción
+    y_pred_proba = model.predict_proba(X_client)[0][1]  # Probabilidad de churn
 
+    # Mostrar resultado
+    st.subheader("Resultado:")
+    if y_pred_proba > 0.5:
+        st.error(f"El cliente tiene una alta probabilidad de churn: {y_pred_proba:.2f}")
+    else:
+        st.success(f"El cliente tiene una baja probabilidad de churn: {y_pred_proba:.2f}")
 
-# Crear un DataFrame con los datos introducidos
-nuevos_datos = pd.DataFrame({
-    'gender': [gender],
-    'seniorcitizen': [seniorcitizen],
-    'partner': [partner],
-    'dependents': [dependents],
-    'tenure': [tenure],
-    'phoneservice': [phoneservice],
-    'multiplelines': [multiplelines],
-    'internetservice': [internetservice],
-    'onlinesecurity': [onlinesecurity],
-    'onlinebackup': [onlinebackup],
-    'deviceprotection': [deviceprotection],
-    'techsupport': [techsupport],
-    'streamingtv': [streamingtv],
-    'streamingmovies': [streamingmovies],
-    'contract': [contract],
-    'paperlessbilling': [paperlessbilling],
-    'paymentmethod': [paymentmethod],
-    'monthlycharges': [monthlycharges],
-    'totalcharges': [totalcharges]
-})
-
-# Preprocesar los datos antes de hacer la predicción
-nuevos_datos_procesados = preprocesar_datos(nuevos_datos)
-
-# Realizar la predicción con el modelo cargado
-if st.sidebar.button('Predecir'):
-    prediccion = modelo_regresion.predict(nuevos_datos_procesados)
-    
-    # Mostrar el resultado
-    st.write(f"La predicción del modelo es: {prediccion[0]:.2f}")
